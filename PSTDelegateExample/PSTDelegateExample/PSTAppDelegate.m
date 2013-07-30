@@ -8,7 +8,16 @@
 
 #import "PSTAppDelegate.h"
 
-@implementation PSTAppDelegate
+#import "PSTDelegateProxy.h"
+#import "PSTExampleDelegate.h"
+
+@interface TestDelegate : NSObject<PSTExampleDelegate>
+@end
+
+@implementation TestDelegate
+@end
+
+@implementation PSTAppDelegate 
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
@@ -16,6 +25,14 @@
     // Override point for customization after application launch.
     self.window.backgroundColor = [UIColor whiteColor];
     [self.window makeKeyAndVisible];
+    
+    PSTDelegateProxy *delegateProxy;
+    @autoreleasepool {
+        TestDelegate *delegate = [TestDelegate new];
+        delegateProxy = [[PSTDelegateProxy alloc] initWithDelegate:delegate];
+    }
+    [(id<PSTExampleDelegate>)delegateProxy exampleDelegateCalledWithString:@"Test"];
+    
     return YES;
 }
 
