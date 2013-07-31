@@ -29,9 +29,10 @@
     PSTDelegateProxy *delegateProxy;
     @autoreleasepool {
         TestDelegate *delegate = [TestDelegate new];
-        delegateProxy = [[PSTDelegateProxy alloc] initWithDelegate:delegate];
+        delegateProxy = [[PSTDelegateProxy alloc] initWithDelegate:delegate
+                                              conformingToProtocol:@protocol(PSTExampleDelegate)];
     }
-    [(id<PSTExampleDelegate>)delegateProxy exampleDelegateCalledWithString:@"Test"];
+    [(id<PSTExampleDelegate>)delegateProxy exampleDelegateRequiredMethod];
     
     return YES;
 }

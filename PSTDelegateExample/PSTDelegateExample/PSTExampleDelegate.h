@@ -10,6 +10,10 @@
 
 @protocol PSTExampleDelegate <NSObject>
 
+@required
+
+- (void)exampleDelegateRequiredMethod;
+
 @optional
 
 - (void)exampleDelegateCalledWithString:(NSString *)string;
