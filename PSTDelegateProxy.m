@@ -82,7 +82,7 @@
 - (instancetype)defaultReturn:(id)defaultReturn {
     return [[PSTDefaultingDelegateProxy alloc] initWithDelegate:self.delegate
                                            conformingToProtocol:self.protocol
-                                                   defaultReturn:defaultReturn];
+                                                  defaultReturn:defaultReturn];
 }
 
 
