@@ -25,7 +25,9 @@
 #import <objc/runtime.h>
 #import <libkern/OSAtomic.h>
 
-@interface PSTYESDefaultingDelegateProxy : PSTDelegateProxy @end
+@interface PSTDefaultingDelegateProxy : PSTDelegateProxy
+- (id)initWithDelegate:(id)delegate conformingToProtocol:(Protocol *)protocol defaultReturn:(id)defaultReturn;
+@end
 
 @implementation PSTDelegateProxy {
     CFDictionaryRef _signatures;
@@ -74,8 +76,15 @@
 #pragma mark - Public
 
 - (instancetype)YESDefault {
-    return [[PSTYESDefaultingDelegateProxy alloc] initWithDelegate:self.delegate conformingToProtocol:self.protocol];
+    return [self defaultReturn:@YES];
 }
+
+- (instancetype)defaultReturn:(id)defaultReturn {
+    return [[PSTDefaultingDelegateProxy alloc] initWithDelegate:self.delegate
+                                           conformingToProtocol:self.protocol
+                                                   defaultReturn:defaultReturn];
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - Private
@@ -126,13 +135,62 @@ static OSSpinLock _lock = OS_SPINLOCK_INIT;
 ///////////////////////////////////////////////////////////////////////////////////////////
 #pragma mark - PSTYESDelegateProxy
 
-@implementation PSTYESDefaultingDelegateProxy
+@implementation PSTDefaultingDelegateProxy{
+    id _defaultReturn;
+}
+
+- (id)initWithDelegate:(id)delegate conformingToProtocol:(Protocol *)protocol defaultReturn:(id)defaultReturn {
+    NSParameterAssert(defaultReturn);
+    self = [super initWithDelegate:delegate conformingToProtocol:protocol];
+    if (nil == self) return nil;
+    
+    _defaultReturn = defaultReturn;
+    
+    return self;
+}
 
 - (void)forwardInvocation:(NSInvocation *)invocation {
-    // If method is a BOOL, return YES.
-    if (strncmp(invocation.methodSignature.methodReturnType, @encode(BOOL), 1) == 0) {
-        BOOL retValue = YES;
-        [invocation setReturnValue:&retValue];
+    const char *returnType = invocation.methodSignature.methodReturnType;
+    
+    BOOL voidReturnType = (0 == strncmp("v", returnType, 1));
+    if (voidReturnType) {
+        @throw [NSException
+                exceptionWithName:@"PSTDelegateProxyException"
+                reason:[NSString stringWithFormat:
+                        @"Default value can not be used for methods with void return type."]
+                userInfo:nil];
+    }
+    
+    BOOL objectReturnType = (0 == strncmp("@", returnType, 1));
+    if (objectReturnType) {
+        [invocation setReturnValue:&_defaultReturn];
+    }else{
+        if (![_defaultReturn isKindOfClass:[NSValue class]]) {
+            @throw [NSException
+                    exceptionWithName:@"PSTDelegateProxyException"
+                    reason:[NSString stringWithFormat:
+                            @"Default value for return type %s should be kind of NSValue",
+                            returnType]
+                    userInfo:nil];
+        }
+        
+        const char *defaultType = [(NSValue *)_defaultReturn objCType];
+        
+        BOOL typeMatch = (0 == strcmp(defaultType, returnType));
+        if (!typeMatch) {
+            @throw [NSException
+                    exceptionWithName:@"PSTDelegateProxyException"
+                    reason:[NSString stringWithFormat:
+                            @"Default value type %s and return type %s do not match",
+                            defaultType,
+                            returnType]
+                    userInfo:nil];
+        }
+        
+        NSUInteger returnLength = invocation.methodSignature.methodReturnLength;
+        char buffer[returnLength];
+        [(NSValue *)_defaultReturn getValue:buffer];
+        [invocation setReturnValue:&buffer];   
     }
 }
 

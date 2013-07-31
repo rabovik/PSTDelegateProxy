@@ -38,6 +38,10 @@
 // Returns an object that will return YES for messages that return a BOOL if they are not implemented.
 - (instancetype)YESDefault;
 
+// Returns an object that will return default value for not implemented methods.
+// Non-pbject types must be wrapped to NSValue (or NSNumber).
+- (instancetype)defaultReturn:(id)defaultReturn;
+
 // The internal (weak) delegate.
 @property (nonatomic, weak, readonly) id delegate;
 
