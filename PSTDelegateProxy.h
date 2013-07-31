@@ -39,7 +39,7 @@
 - (instancetype)YESDefault;
 
 // Returns an object that will return default value for not implemented methods.
-// Non-object types must be wrapped to NSValue (or NSNumber).
+// Non-object types must be wrapped in NSValue (or NSNumber).
 - (instancetype)defaultReturn:(id)defaultReturn;
 
 // The internal (weak) delegate.
